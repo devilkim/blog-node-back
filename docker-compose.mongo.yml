@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  blog-back:
+    container_name: blog-back
+    image: node:10    
+    working_dir: /app
+    ports:
+      - 3000:3000
+    volumes:
+      - ./:/app      
+    environment:
+      - ENVIRONMENT=development
+      - PORT=3000
+      - DB_HOST=mysql
+      - DB_USER=blog
+      - DB_PASSWORD=blog
+      - DB_PORT=3306
+      - DB_NAME=blog
+    command:
+      - /bin/bash
+      - -c
+      - |
+        pwd 
+        npm install
+        npm start
+  mongo:   
+    container_name: mongo
+    image: mongo:4.1
+    restart: always    
+    ports:
+      - "27017:27017"   
+    volumes:
+      - ../mongo:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=blog
+      - MONGO_INITDB_ROOT_PASSWORD=blogpassword
