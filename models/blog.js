@@ -2,7 +2,7 @@
 const mysql = require('../_core/mysql');
 const model = {};
 
-model.boards = async () => {    
+model.boards = async (isAuth) => {    
   const conn = await mysql.conn();
   const [boards] = await conn.query(`
     SELECT board_no AS no, title, blog.date_for_korea(created_at) AS date, 
@@ -13,15 +13,17 @@ model.boards = async () => {
     WHERE board_no = a.board_no
     ORDER BY aa.board_tag_no) AS tags 
     FROM t_boards AS a
+    WHERE a.is_enabled = 1 
+    AND ((? = false AND is_public = 1) OR (? = true))
     ORDER BY board_no DESC
-  `);       
+  `, [isAuth, isAuth]);       
   return boards.map(board => {
     board.tags = JSON.parse(board.tags);
     return board;
   });  
 }
 
-model.boardsByTagName = async (tagName) => {    
+model.boardsByTagName = async (tagName, isAuth) => {    
   const conn = await mysql.conn();  
   const [boards] = await conn.query(`
     SELECT board_no AS no, title, blog.date_for_korea(created_at) AS date, 
@@ -33,15 +35,17 @@ model.boardsByTagName = async (tagName) => {
     ORDER BY aa.board_tag_no) AS tags 
     FROM t_boards AS a
     WHERE board_no IN (SELECT board_no FROM t_board_tags WHERE tag_no = (SELECT tag_no FROM t_tags WHERE name = ?))
+    AND a.is_enabled = 1
+    AND ((? = false AND is_public = 1) OR (? = true))
     ORDER BY board_no DESC
-  `, [tagName]);       
+  `, [tagName, isAuth, isAuth]);       
   return boards.map(board => {
     board.tags = JSON.parse(board.tags);
     return board;
   }); 
 }
 
-model.board = async (no) => {    
+model.board = async (no, isAuth) => {    
   const conn = await mysql.conn();
   const [board] = await conn.query(`
     SELECT board_no AS no, title, blog.date_for_korea(created_at) AS date, contents,
@@ -53,7 +57,9 @@ model.board = async (no) => {
       ORDER BY aa.board_tag_no) AS tags  
     FROM t_boards AS a
     WHERE board_no = ?
-  `, [no]);    
+    AND a.is_enabled = 1
+    AND ((? = false AND is_public = 1) OR (? = true))
+  `, [no, isAuth, isAuth]);    
   if (board.length === 0) {
     return null;
   }
@@ -63,7 +69,7 @@ model.board = async (no) => {
 
 model.addBoard = async (title, contents, tags, isPublic) => {
   const conn = await mysql.conn();
-  const [{insertId}] = await conn.query('INSERT INTO t_boards (title, contents) VALUES (?, ?)', [title, contents]);   
+  const [{insertId}] = await conn.query('INSERT INTO t_boards (title, contents, is_public) VALUES (?, ?, ?)', [title, contents, isPublic ? 1 : 0]);   
   for (let i = 0; i < tags.length; i++) {
     await conn.query('INSERT IGNORE INTO t_tags (name) VALUES (?)', [tags[i].name])
   }

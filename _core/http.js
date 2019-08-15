@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const camelcase = require('camelcase');
-const middleware = {};
+const {auth} = require('./utils');
+const http = {};
 
 function HttpResponse(httpStatus, message, data) {
   this.httpStatus = httpStatus;
@@ -26,7 +27,7 @@ const httpRequest = (req) => {
   req.param = (key, defaultValue) => httpParameter('param', key, req.params[key], defaultValue);
   req.query = (key, defaultValue) => httpParameter('query', key, req.queries[key], defaultValue);
   req.body = (key, defaultValue) => httpParameter('body', key, req.bodies[key], defaultValue);
-  return {header: req.header, param: req.param, query: req.query, body: req.body};
+  return req;
 };
 
 const httpParameter = (type, key, value, defaultValue) => {
@@ -38,9 +39,8 @@ const httpParameter = (type, key, value, defaultValue) => {
     return value;
   }    
 };
-
-middleware.api = (controllerMethod) => { 
-  return (req, {}, next) => {
+http.api = (controllerMethod) => { 
+  return (req, {}, next) => {    
     controllerMethod(httpRequest(req), httpResponse)
     .then(resultObject => {
       next(resultObject);
@@ -51,10 +51,10 @@ middleware.api = (controllerMethod) => {
     });
   };
 };
-middleware.notFound = ({}, res, next) => {    
+http.notFound = ({}, res, next) => {    
   next(httpResponse.notFound());
 };
-middleware.res = (type) => {            
+http.res = (type) => {            
   return (data, {}, res, {}) => {
     res.type(type); 
     if (!(data instanceof HttpResponse)) {            
@@ -80,5 +80,6 @@ middleware.res = (type) => {
     }
   }
 };
+http.httpResponse = httpResponse;
 
-module.exports = middleware;
+module.exports = http;

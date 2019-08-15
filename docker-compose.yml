@@ -10,12 +10,13 @@ services:
       - ./:/app      
     environment:
       ENVIRONMENT: development
-      PORT: 3000
+      PORT: 3000      
       DB_HOST: mysql
       DB_USER: blog
       DB_PASSWORD: blog
       DB_PORT: 3306
       DB_DATABASE: blog
+      JWT_SECRET_KEY: wF9Hpi6vrtQohahz4tIr7h7BKnCasryxmxNXZUW5uaqj9Uq99H
     command:
       - /bin/bash
       - -c
