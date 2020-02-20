@@ -7,28 +7,19 @@ const auth = {
   decodeToken: (token) => jwt.verify(token, process.env.JWT_SECRET_KEY),
   isAuthCustom: (token) => true,
   authType: (authType) => {
-    return (req, res, next) => {        
-      console.log('#####');
-      try {      
-        console.log('SUCCESS1');
-        console.log(req.headers.authorization);
+    return (req, res, next) => {              
+      try {              
         req.token = auth.decodeToken(req.headers.authorization.replace('Bearer ', ''));
-        req.isAuth = true;
-        console.log('SUCCESS2');
-        console.log(req.token);
+        req.isAuth = true;        
         if (!auth.isAuthCustom(req.token)) {          
           throw httpResponse.unauthorized();
-        }        
-        console.log('SUCCESS3');
+        }                
         next();
       } catch (e) {
-        req.isAuth = false;
-        console.log('ERROR1');
-        if (authType === auth.REQUIRED) {          
-          console.log('ERROR2');
+        req.isAuth = false;        
+        if (authType === auth.REQUIRED) {                    
           next(httpResponse.unauthorized());
-        } else {
-          console.log('ERROR3');
+        } else {          
           next();
         }      
       }

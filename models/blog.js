@@ -8,11 +8,11 @@ model.boards = async (isAuth) => {
     SELECT board_no AS no, title, blog.date_for_korea(created_at) AS date, 
     (SELECT 
     CONCAT('[', GROUP_CONCAT(JSON_OBJECT('no', bb.tag_no, 'name', bb.name)), ']') AS json
-    FROM t_board_tags AS aa 
+    FROM t_blog_board_tags AS aa 
     INNER JOIN t_tags AS bb USING (tag_no) 
     WHERE board_no = a.board_no
     ORDER BY aa.board_tag_no) AS tags 
-    FROM t_boards AS a
+    FROM t_blog_boards AS a
     WHERE a.is_enabled = 1 
     AND ((? = false AND is_public = 1) OR (? = true))
     ORDER BY board_no DESC
@@ -29,12 +29,12 @@ model.boardsByTagName = async (tagName, isAuth) => {
     SELECT board_no AS no, title, blog.date_for_korea(created_at) AS date, 
     (SELECT 
     CONCAT('[', GROUP_CONCAT(JSON_OBJECT('no', bb.tag_no, 'name', bb.name)), ']') AS json
-    FROM t_board_tags AS aa 
+    FROM t_blog_board_tags AS aa 
     INNER JOIN t_tags AS bb USING (tag_no) 
     WHERE board_no = a.board_no
     ORDER BY aa.board_tag_no) AS tags 
-    FROM t_boards AS a
-    WHERE board_no IN (SELECT board_no FROM t_board_tags WHERE tag_no = (SELECT tag_no FROM t_tags WHERE name = ?))
+    FROM t_blog_boards AS a
+    WHERE board_no IN (SELECT board_no FROM t_blog_board_tags WHERE tag_no = (SELECT tag_no FROM t_tags WHERE name = ?))
     AND a.is_enabled = 1
     AND ((? = false AND is_public = 1) OR (? = true))
     ORDER BY board_no DESC
@@ -51,11 +51,11 @@ model.board = async (no, isAuth) => {
     SELECT board_no AS no, title, blog.date_for_korea(created_at) AS date, contents,
     (SELECT 
       CONCAT('[', GROUP_CONCAT(JSON_OBJECT('no', bb.tag_no, 'name', bb.name)), ']') AS json
-      FROM t_board_tags AS aa 
+      FROM t_blog_board_tags AS aa 
       INNER JOIN t_tags AS bb USING (tag_no) 
       WHERE board_no = a.board_no
       ORDER BY aa.board_tag_no) AS tags  
-    FROM t_boards AS a
+    FROM t_blog_boards AS a
     WHERE board_no = ?
     AND a.is_enabled = 1
     AND ((? = false AND is_public = 1) OR (? = true))
@@ -69,7 +69,7 @@ model.board = async (no, isAuth) => {
 
 model.addBoard = async (title, contents, tags, isPublic) => {
   const conn = await mysql.conn();
-  const [{insertId}] = await conn.query('INSERT INTO t_boards (title, contents, is_public) VALUES (?, ?, ?)', [title, contents, isPublic ? 1 : 0]);   
+  const [{insertId}] = await conn.query('INSERT INTO t_blog_boards (title, contents, is_public) VALUES (?, ?, ?)', [title, contents, isPublic ? 1 : 0]);   
   for (let i = 0; i < tags.length; i++) {
     await conn.query('INSERT IGNORE INTO t_tags (name) VALUES (?)', [tags[i].name])
   }
@@ -78,7 +78,7 @@ model.addBoard = async (title, contents, tags, isPublic) => {
     tags[i].tagNo = tag[0].tagNo;    
   }
   for (let i = 0; i < tags.length; i++) {
-    await conn.query('INSERT IGNORE INTO t_board_tags (board_no, tag_no) VALUES (?, ?)', [insertId, tags[i].tagNo])
+    await conn.query('INSERT IGNORE INTO t_blog_board_tags (board_no, tag_no) VALUES (?, ?)', [insertId, tags[i].tagNo])
   }  
 }
 
